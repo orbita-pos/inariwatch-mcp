@@ -1,0 +1,39 @@
+{
+  "name": "@inariwatch/mcp",
+  "version": "1.0.0",
+  "description": "Connect any AI coding tool to InariWatch in one command",
+  "bin": {
+    "inariwatch-mcp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "inariwatch",
+    "ai",
+    "monitoring",
+    "claude",
+    "cursor",
+    "codex"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orbita-pos/inariwatch-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orbita-pos/inariwatch-mcp/issues"
+  },
+  "homepage": "https://inariwatch.com",
+  "author": "Jesus Bernal <info@jesusbr.com>"
+}
