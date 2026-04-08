@@ -36,11 +36,12 @@ export function installCapture(project, cwd = process.cwd()) {
     if (project.hasCapture)
         return { ok: true }; // Already installed
     // Install the package
+    const pkg = "@inariwatch/capture@^0.5.0";
     const installCmd = {
-        npm: "npm install @inariwatch/capture",
-        yarn: "yarn add @inariwatch/capture",
-        pnpm: "pnpm add @inariwatch/capture",
-        bun: "bun add @inariwatch/capture",
+        npm: `npm install ${pkg}`,
+        yarn: `yarn add ${pkg}`,
+        pnpm: `pnpm add ${pkg}`,
+        bun: `bun add ${pkg}`,
     }[project.packageManager];
     try {
         execSync(installCmd, { cwd, stdio: "pipe" });
@@ -73,26 +74,22 @@ function setupNextjs(cwd) {
         const isTs = file.endsWith(".ts");
         const isMjs = file.endsWith(".mjs");
         if (isTs || isMjs) {
-            // ESM: add import at top, wrap default export
-            const importLine = `import { withInariWatch } from "@inariwatch/capture/next"\n`;
+            // ESM: extract default export into variable, re-export wrapped
             if (content.includes("export default")) {
-                // Wrap: export default X → export default withInariWatch(X)
-                const wrapped = importLine + content.replace(/export default (.+)/, (_, exported) => {
-                    // Handle multiline: export default { ... } or export default nextConfig
-                    const trimmed = exported.trim();
-                    if (trimmed.endsWith(";")) {
-                        return `export default withInariWatch(${trimmed.slice(0, -1)});`;
-                    }
-                    return `export default withInariWatch(${trimmed})`;
-                });
+                const importLine = `import { withInariWatch } from "@inariwatch/capture/next"\n`;
+                const wrapped = importLine +
+                    content.replace("export default ", "const _nextConfig = ") +
+                    "\nexport default withInariWatch(_nextConfig);\n";
                 writeFileSync(configPath, wrapped);
             }
         }
         else {
-            // CJS: add require, wrap module.exports
-            const requireLine = `const { withInariWatch } = require("@inariwatch/capture/next")\n`;
+            // CJS: extract module.exports into variable, re-export wrapped
             if (content.includes("module.exports")) {
-                const wrapped = requireLine + content.replace(/module\.exports\s*=\s*/, "module.exports = withInariWatch(") + ")";
+                const requireLine = `const { withInariWatch } = require("@inariwatch/capture/next")\n`;
+                const wrapped = requireLine +
+                    content.replace(/module\.exports\s*=\s*/, "const _nextConfig = ") +
+                    "\nmodule.exports = withInariWatch(_nextConfig);\n";
                 writeFileSync(configPath, wrapped);
             }
         }
@@ -127,6 +124,7 @@ export async function promptSubstrate(cwd = process.cwd()) {
 export function ask(question) {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
     return new Promise((resolve) => {
+        rl.on("close", () => resolve(""));
         rl.question(question, (answer) => {
             rl.close();
             resolve(answer);
