@@ -28,6 +28,9 @@ export function configureTools(tools, token) {
                 case "gemini":
                     configureGemini(token);
                     break;
+                case "openclaw":
+                    configureOpenClaw(token);
+                    break;
                 default:
                     continue;
             }
@@ -72,6 +75,43 @@ function configureGemini(token) {
     ], { stdio: "pipe" });
     if (result.status !== 0)
         throw new Error(result.stderr?.toString().trim() || "gemini mcp add failed");
+}
+function configureOpenClaw(token) {
+    // Try CLI first (if openclaw binary is in PATH)
+    const cliResult = spawnSync("openclaw", [
+        "mcp", "set", "inariwatch",
+        JSON.stringify({
+            url: MCP_URL,
+            transport: "streamable-http",
+            headers: { Authorization: `Bearer ${token}` },
+        }),
+    ], { stdio: "pipe" });
+    if (cliResult.status === 0)
+        return;
+    // Fallback: write directly to ~/.openclaw/openclaw.json
+    const configPath = join(homedir(), ".openclaw", "openclaw.json");
+    const dir = dirname(configPath);
+    if (!existsSync(dir))
+        mkdirSync(dir, { recursive: true });
+    let existing = {};
+    if (existsSync(configPath)) {
+        try {
+            existing = JSON.parse(readFileSync(configPath, "utf8"));
+        }
+        catch {
+            // Corrupt JSON — overwrite
+        }
+    }
+    const mcp = existing.mcp ?? {};
+    const servers = mcp.servers ?? {};
+    servers["inariwatch"] = {
+        url: MCP_URL,
+        transport: "streamable-http",
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    mcp.servers = servers;
+    existing.mcp = mcp;
+    writeFileSync(configPath, JSON.stringify(existing, null, 2) + "\n");
 }
 function cursorConfigPath() {
     const home = homedir();

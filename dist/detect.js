@@ -66,6 +66,12 @@ export function detectTools() {
             detected: !!which("gemini"),
             version: getVersion("gemini") ?? undefined,
         },
+        {
+            name: "OpenClaw",
+            id: "openclaw",
+            detected: !!which("openclaw") || existsSync(join(home, ".openclaw")),
+            version: getVersion("openclaw") ?? undefined,
+        },
     ];
 }
 /**
