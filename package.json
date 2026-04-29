@@ -61,5 +61,8 @@
   "devDependencies": {
     "typescript": "^5.5.0",
     "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "@inariwatch/capture": "^0.10.2"
   }
 }
